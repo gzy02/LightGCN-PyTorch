@@ -6,7 +6,7 @@ from DataSet import DataSet
 
 
 class LightGCN(nn.Module):
-    def __init__(self, origin_data: DataSet, hidden_dim: int, n_layers: int, load_weight:bool):
+    def __init__(self, origin_data: DataSet, hidden_dim: int, n_layers: int,alpha_k:List[float], load_weight:bool):
         super().__init__()
         # 邻接表
         self.user_item_map = origin_data.user_item_map
@@ -17,6 +17,7 @@ class LightGCN(nn.Module):
         self.user_num = origin_data.user_num
         self.item_num = origin_data.item_num
         self.n_layers = n_layers
+        self.alpha_k=alpha_k
         # 模型参数
         self.user_embedding = nn.Embedding(self.user_num, hidden_dim)
         self.item_embedding = nn.Embedding(self.item_num, hidden_dim)
@@ -31,13 +32,14 @@ class LightGCN(nn.Module):
             print('use xavier initilizer')
 
     def LightGCNConvolute(self):
-        sum_embedding=new_embedding = torch.cat([self.user_embedding.weight, self.item_embedding.weight])
-        for layer in range(self.n_layers):
+        new_embedding = torch.cat([self.user_embedding.weight, self.item_embedding.weight])
+        sum_embedding = self.alpha_k[0]*new_embedding
+        for layer in range(1,self.n_layers):
             next_embedding=torch.sparse.mm(self.graph,new_embedding)
-            sum_embedding+=next_embedding/(layer+2)
+            sum_embedding+=next_embedding*self.alpha_k[layer]
             new_embedding=next_embedding
-        
-        return sum_embedding[:self.user_num],sum_embedding[self.user_num:]
+        return torch.split(sum_embedding, [self.user_num, self.item_num])
+        #return sum_embedding[:self.user_num],sum_embedding[self.user_num:]
 
     def forward(self, user, item):
         self.train()

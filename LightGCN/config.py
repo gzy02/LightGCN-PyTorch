@@ -6,12 +6,13 @@ class config:
     data_path = "./data/{}/".format(dataSetName)
 
     # 取样
-    fake_num = 300
-    batch_size = 4096
+    fake_num = 300  # BCELoss使用
+    batch_size = 1024
 
     # 模型
-    hidden_dim = 1
-    n_layers = 0
+    hidden_dim = 64
+    n_layers = 3
+    alpha_k = [1/(layer+1) for layer in range(n_layers+1)]
 
     load_weight = False
     load_epoch = 0
@@ -20,8 +21,8 @@ class config:
     # 训练
     epochs = 1000
     lr = 1e-3
-    decay = 0
-    lambda_BCELoss = 0.2
+    decay = 1e-4
+    useBCELoss = True
 
     # 测试
     topk = 20
