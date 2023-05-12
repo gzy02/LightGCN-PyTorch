@@ -22,7 +22,7 @@ class config:
     epochs = 1000
     lr = 1e-3
     decay = 1e-4
-    useBCELoss = True
+    useBCELoss = False
 
     # 测试
     topk = 20

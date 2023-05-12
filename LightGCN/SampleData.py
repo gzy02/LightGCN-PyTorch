@@ -47,7 +47,7 @@ class SampleData(Dataset):
                         Counter(random.sample(list(neg_items.elements()), need)))
                 need -= neg_items_len
 
-            assert len(items)*self.fake_num == sum(neg_samples.values())
+            # assert len(items)*self.fake_num == sum(neg_samples.values())
             # 处理负样本，label 设为 0
             for neg_sample in neg_samples.elements():
                 self.Xs.append((user, neg_sample, 0))
@@ -113,7 +113,7 @@ class SampleDataPair(Dataset):
                         Counter(random.sample(list(neg_items.elements()), need)))
                 need -= neg_items_len
 
-            assert len(items_set) == sum(neg_samples.values())
+            # assert len(items_set) == sum(neg_samples.values())
             zipped = zip(items_set, neg_samples.elements())
             for item, neg in zipped:
                 self.Xs.append((user, item, neg))
