@@ -30,7 +30,7 @@ print("物品节点度数最小值：", min(origin_train_data.item_degree))
 # %% 初始化原始测试数据
 test_user_item_map = get_user_item_map(config.data_path+'test.txt')
 batch_users_gpu = torch.arange(
-    0, len(test_user_item_map), dtype=torch.int64).to(device)
+    0, origin_train_data.user_num, dtype=torch.int32).to(device)
 
 # %% 模型与优化器
 model = LightGCN(origin_train_data, config.hidden_dim,
@@ -75,8 +75,8 @@ if config.useBCELoss:
         print('Epoch {} finished, average loss {}'.format(
             epoch, sum(losses) / len(losses)))
         if epoch % 10 == 0:
-            torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(epoch,
-                                                                                              config.hidden_dim, config.n_layers, config.lr, config.decay))
+            torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
+                epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
             precision, recall, nDCG, F1 = Test(
                 model, batch_users_gpu, origin_train_data, test_user_item_map)
             print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}.'.format(
@@ -111,9 +111,9 @@ else:
         print('Epoch {} finished, average loss {}'.format(
             epoch, sum(losses) / len(losses)))
         if epoch % 10 == 0:
-            torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(epoch,
-                                                                                              config.hidden_dim, config.n_layers, config.lr, config.decay))
+            torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
+                epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
             precision, recall, nDCG, F1 = Test(
                 model, batch_users_gpu, origin_train_data, test_user_item_map)
-            print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}.'.format(
+            print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}'.format(
                 epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))

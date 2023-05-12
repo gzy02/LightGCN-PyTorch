@@ -1,22 +1,22 @@
 # 定义超参
 class config:
     seed = 2023
-    dataSetName = 'gowalla'
+    dataSetName = 'book'
     # 可选列表: ['book','amazon-book','gowalla','yelp2018']
     data_path = "./data/{}/".format(dataSetName)
 
     # 取样
     fake_num = 300  # BCELoss使用
-    batch_size = 1024
+    batch_size = 2048
 
     # 模型
     hidden_dim = 64
     n_layers = 3
     alpha_k = [1/(layer+1) for layer in range(n_layers+1)]
 
-    load_weight = False
-    load_epoch = 0
-    load_path = data_path+""
+    load_weight = True
+    load_epoch = 10
+    load_path = data_path+"./model/10_64_3_0.001_0.0001.pth"
 
     # 训练
     epochs = 1000
@@ -25,7 +25,7 @@ class config:
     useBCELoss = False
 
     # 测试
-    topk = 20
+    topk = 10
 
     @classmethod
     def display(cls):
