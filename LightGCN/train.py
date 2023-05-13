@@ -26,6 +26,7 @@ print("用户节点度数最大值：", max(origin_train_data.user_degree))
 print("用户节点度数最小值：", min(origin_train_data.user_degree))
 print("物品节点度数最大值：", max(origin_train_data.item_degree))
 print("物品节点度数最小值：", min(origin_train_data.item_degree))
+print("用户-物品交互数：", origin_train_data.interactions_num)
 
 # %% 初始化原始测试数据
 test_user_item_map = get_user_item_map(config.data_path+'test.txt')
@@ -75,11 +76,12 @@ if config.useBCELoss:
 
 else:
 
-    trainloader = get_trainloaderPair(origin_train_data)
+    # trainloader = get_trainloaderPair(origin_train_data)
     for epoch in range(1+config.load_epoch, config.epochs+1+config.load_epoch):
         # 在训练集上训练
         losses = []
 
+        trainloader = get_trainloaderPair(origin_train_data)
         for data in trainloader:
             user, item, neg = data
             loss = model.bpr_loss(
@@ -91,6 +93,7 @@ else:
 
         print('Epoch {} finished, average loss {}'.format(
             epoch, sum(losses) / len(losses)))
+
         if epoch % 5 == 0:
             torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
                 epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
@@ -98,5 +101,3 @@ else:
                 model, batch_users_gpu, origin_train_data, test_user_item_map)
             print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}'.format(
                 epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
-            trainloader = get_trainloaderPair(
-                origin_train_data)  # 每训练5次，重新负采样一次

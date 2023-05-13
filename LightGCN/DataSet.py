@@ -19,7 +19,7 @@ def get_user_item_map(test_data_path: str) -> Dict[int, Set[int]]:
 
 
 class DataSet():
-    def __init__(self, data_path: str, device:str):
+    def __init__(self, data_path: str, device: str):
         self.user_item_map: Dict[int, Set[int]] = dict()  # 邻接表
         self.item_num: int = 0
         self.user_num: int = 0
@@ -49,9 +49,18 @@ class DataSet():
             for item in items:
                 self.item_degree[item] += 1
 
+        exclude_index = []
+        exclude_items = []
+        for user_id, items in self.user_item_map.items():
+            exclude_index.extend([user_id] * len(items))
+            exclude_items.extend(items)
+        self.interactions_num = len(exclude_items)
+        self.exclude_index = torch.LongTensor(exclude_index).to(device)
+        self.exclude_items = torch.LongTensor(exclude_items).to(device)
+
         adj_matrix = self.__init_adj_matrix()
         L2_degree_matrix = self.__init_L2_degree_matrix()
-        self.norm_adj_matrix: Tensor = torch.sparse.mm(torch.sparse.mm(
+        self.norm_adj_matrix = torch.sparse.mm(torch.sparse.mm(
             L2_degree_matrix, adj_matrix), L2_degree_matrix).to(device)
 
     def __init_L2_degree_matrix(self):

@@ -6,9 +6,9 @@ class config:
     data_path = "./data/{}/".format(dataSetName)
 
     # 取样
-    useBCELoss = True
-    fake_num = 8  # BCELoss使用
-    batch_size = 4096
+    useBCELoss = False
+    fake_num = 6  # BCELoss使用
+    batch_size = 8192
 
     # 模型
     hidden_dim = 64
@@ -22,7 +22,7 @@ class config:
     # 训练
     epochs = 1000
     lr = 1e-3
-    decay = 1e-5
+    decay = 0
 
     # 测试
     topk = 20

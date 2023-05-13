@@ -18,12 +18,8 @@ def Test(model: LightGCN, batch_users_gpu: Tensor, origin_train_data: DataSet, t
         # 测试开始
         rating = model.getUsersRating(batch_users_gpu)  # 模型预测的用户-物品交互矩阵
         # 去除用户交互过的物品
-        exclude_index = []
-        exclude_items = []
-        for user_id, items in origin_train_data.user_item_map.items():
-            exclude_index.extend([user_id] * len(items))
-            exclude_items.extend(items)
-        rating[exclude_index, exclude_items] = 0.0  # 因为sigmoid输出是(0,1)
+        rating[origin_train_data.exclude_index,
+               origin_train_data.exclude_items] = 0.0  # 因为sigmoid输出是(0,1)
         _, topk_indices = torch.topk(
             rating, k=config.topk)  # 降序排列的top-k个待推荐物品矩阵
         for user_id, items in test_user_item_map.items():
