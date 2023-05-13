@@ -1,7 +1,6 @@
 import os
 import pickle
 import random
-import tqdm
 import numpy as np
 from config import config
 from DataSet import DataSet
@@ -23,7 +22,7 @@ class SampleData(Dataset):
 
     def __init_dataset(self):
         item_indices = np.arange(self.item_num)
-        for user, items in tqdm.tqdm(self.user_item_map.items()):
+        for user, items in self.user_item_map.items():
             for item in items:
                 self.Xs.append((user, item, 1))  # 有交互则为1
 
@@ -60,20 +59,14 @@ class SampleData(Dataset):
         return len(self.Xs)
 
 
-def get_trainloader(origin_train_data: DataSet, trainloader_path: str) -> DataLoader:
+def get_trainloader(origin_train_data: DataSet) -> DataLoader:
     """获取供BCELoss"""
-    if not os.path.exists(trainloader_path):
-        sample_train_data = SampleData(origin_train_data, config.fake_num)
-        trainloader = DataLoader(sample_train_data,
-                                 batch_size=config.batch_size,
-                                 shuffle=True,
-                                 drop_last=False,
-                                 num_workers=8)
-        with open(trainloader_path, "wb") as fp:
-            pickle.dump(trainloader, fp)
-    else:
-        with open(trainloader_path, "rb") as fp:
-            trainloader = pickle.load(fp)
+    sample_train_data = SampleData(origin_train_data, config.fake_num)
+    trainloader = DataLoader(sample_train_data,
+                             batch_size=config.batch_size,
+                             shuffle=True,
+                             drop_last=False,
+                             num_workers=8)
     return trainloader
 
 
@@ -89,29 +82,22 @@ class SampleDataPair(Dataset):
 
     def __init_dataset(self):
         item_indices = np.arange(self.item_num)
-        for user, items in tqdm.tqdm(self.user_item_map.items()):
+        for user, items in self.user_item_map.items():
             for item in items:
                 self.Xs.append((user, item, 1))  # 有交互则为1
 
             need = len(items)
             items_set = items
             neg_samples = Counter()
-            while need > 0:
-                # 根据 item_weight 抽取 fake_num 个样本
-                neg_items = Counter(
-                    np.random.choice(item_indices, size=need*2, p=self.item_weight, replace=True))
 
-                # 只保留用户未交互过的物品
-                for item in items_set:
-                    if item in neg_items:
-                        del neg_items[item]
-                neg_items_len = sum(neg_items.values())
-                if neg_items_len <= need:
-                    neg_samples.update(neg_items)
-                else:
-                    neg_samples.update(
-                        Counter(random.sample(list(neg_items.elements()), need)))
-                need -= neg_items_len
+            # 根据 item_weight 抽取 fake_num 个样本
+            neg_items = Counter(
+                np.random.choice(item_indices, size=need*2, p=self.item_weight, replace=True))
+            # 只保留用户未交互过的物品
+            for item in items_set:
+                if item in neg_items:
+                    del neg_items[item]
+            neg_samples.update(neg_items)
 
             # assert len(items_set) == sum(neg_samples.values())
             zipped = zip(items_set, neg_samples.elements())
@@ -126,18 +112,12 @@ class SampleDataPair(Dataset):
         return len(self.Xs)
 
 
-def get_trainloaderPair(origin_train_data: DataSet, trainloader_path: str) -> DataLoader:
+def get_trainloaderPair(origin_train_data: DataSet) -> DataLoader:
     """获取供BCELoss"""
-    if not os.path.exists(trainloader_path):
-        sample_train_data = SampleDataPair(origin_train_data)
-        trainloader = DataLoader(sample_train_data,
-                                 batch_size=config.batch_size,
-                                 shuffle=True,
-                                 drop_last=False,
-                                 num_workers=8)
-        with open(trainloader_path, "wb") as fp:
-            pickle.dump(trainloader, fp)
-    else:
-        with open(trainloader_path, "rb") as fp:
-            trainloader = pickle.load(fp)
+    sample_train_data = SampleDataPair(origin_train_data)
+    trainloader = DataLoader(sample_train_data,
+                             batch_size=config.batch_size,
+                             shuffle=True,
+                             drop_last=False,
+                             num_workers=8)
     return trainloader

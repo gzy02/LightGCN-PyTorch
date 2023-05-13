@@ -37,6 +37,7 @@ model = LightGCN(origin_train_data, config.hidden_dim,
                  config.n_layers, config.alpha_k, config.load_weight)
 if config.load_weight:
     model.load_state_dict(torch.load(config.load_path))
+    print(f"Load model {config.load_path}")
 model = model.to(device)
 
 optimizer = torch.optim.Adam(
@@ -44,19 +45,7 @@ optimizer = torch.optim.Adam(
 
 # %% 负采样得到完整训练数据后开始训练
 if config.useBCELoss:
-    trainloader = get_trainloader(
-        origin_train_data, config.data_path+'sample.pkl')
-
-    # 将 DataLoader 中的全部数据集载入GPU，防止反复迁移数据
-    user_tensor = []
-    item_tensor = []
-    label_tensor = []
-    for data in trainloader:
-        user, item, label = data
-        user_tensor.append(user.to(device))
-        item_tensor.append(item.to(device))
-        label_tensor.append(label.float().to(device))
-
+    trainloader = get_trainloader(origin_train_data)
     crit = torch.nn.BCELoss()  # 损失函数：BCELoss
 
     for epoch in range(1+config.load_epoch, config.epochs+1+config.load_epoch):
@@ -64,9 +53,10 @@ if config.useBCELoss:
         losses = []
         # 提前将所有训练数据移入GPU，会快些，但每次epoch都不会shuffle
         # 也可以用trainloader，每次epoch都会shuffle，但会慢
-        for i in range(len(label_tensor)):
-            y_ = model(user_tensor[i], item_tensor[i])
-            loss = crit(y_, label_tensor[i])
+        for data in trainloader:
+            user, item, label = data
+            y_ = model(user.to(device), item.to(device))
+            loss = crit(y_, label.float().to(device))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -74,35 +64,26 @@ if config.useBCELoss:
 
         print('Epoch {} finished, average loss {}'.format(
             epoch, sum(losses) / len(losses)))
-        if epoch % 10 == 0:
+        if epoch % 5 == 0:
             torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
                 epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
             precision, recall, nDCG, F1 = Test(
                 model, batch_users_gpu, origin_train_data, test_user_item_map)
             print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}.'.format(
                 epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
+            trainloader = get_trainloader(origin_train_data)
 
 else:
-    trainloader = get_trainloaderPair(
-        origin_train_data, config.data_path+'sample_pair.pkl')
 
-    # 将 DataLoader 中的全部数据集载入GPU，防止反复迁移数据
-    user_tensor = []
-    item_tensor = []
-    neg_tensor = []
-    for data in trainloader:
-        user, item, neg = data
-        user_tensor.append(user.to(device))
-        item_tensor.append(item.to(device))
-        neg_tensor.append(neg.to(device))
-
+    trainloader = get_trainloaderPair(origin_train_data)
     for epoch in range(1+config.load_epoch, config.epochs+1+config.load_epoch):
         # 在训练集上训练
         losses = []
 
-        for index in range(len(user_tensor)):
-            user, item, neg = user_tensor[index], item_tensor[index], neg_tensor[index]
-            loss = model.bpr_loss(user, item, neg)
+        for data in trainloader:
+            user, item, neg = data
+            loss = model.bpr_loss(
+                user.to(device), item.to(device), neg.to(device))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -110,10 +91,12 @@ else:
 
         print('Epoch {} finished, average loss {}'.format(
             epoch, sum(losses) / len(losses)))
-        if epoch % 10 == 0:
+        if epoch % 5 == 0:
             torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
                 epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
             precision, recall, nDCG, F1 = Test(
                 model, batch_users_gpu, origin_train_data, test_user_item_map)
             print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}'.format(
                 epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
+            trainloader = get_trainloaderPair(
+                origin_train_data)  # 每训练5次，重新负采样一次

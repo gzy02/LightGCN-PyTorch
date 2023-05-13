@@ -4,13 +4,13 @@ from DataSet import DataSet
 from test import Test
 from LightGCN import LightGCN
 import pandas as pd
-epoch = 10
+epoch = 90
 hidden_dim = 64
 n_layers = 3
 topk = 10
 alpha_k = [1/(layer+1) for layer in range(1+n_layers)]
 lr = 0.001
-decay = 0.0001
+decay = 0
 
 data_path = "./data/book/"
 test_user_data_path = data_path+'test_dataset.csv'
