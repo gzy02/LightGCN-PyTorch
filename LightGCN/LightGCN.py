@@ -6,7 +6,7 @@ from DataSet import DataSet
 
 
 class LightGCN(nn.Module):
-    def __init__(self, origin_data: DataSet, hidden_dim: int, n_layers: int,alpha_k:List[float], load_weight:bool):
+    def __init__(self, origin_data: DataSet, hidden_dim: int, n_layers: int,alpha_k:List, load_weight:bool):
         super().__init__()
         # 邻接表
         self.user_item_map = origin_data.user_item_map

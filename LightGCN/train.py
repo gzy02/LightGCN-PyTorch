@@ -46,14 +46,13 @@ optimizer = torch.optim.Adam(
 
 # %% 负采样得到完整训练数据后开始训练
 if config.useBCELoss:
-    trainloader = get_trainloader(origin_train_data)
+    # trainloader = get_trainloader(origin_train_data)
     crit = torch.nn.BCELoss()  # 损失函数：BCELoss
 
     for epoch in range(1+config.load_epoch, config.epochs+1+config.load_epoch):
         # 在训练集上训练
         losses = []
-        # 提前将所有训练数据移入GPU，会快些，但每次epoch都不会shuffle
-        # 也可以用trainloader，每次epoch都会shuffle，但会慢
+        trainloader = get_trainloader(origin_train_data, config.seed+epoch)
         for data in trainloader:
             user, item, label = data
             y_ = model(user.to(device), item.to(device))
@@ -72,8 +71,6 @@ if config.useBCELoss:
                 model, batch_users_gpu, origin_train_data, test_user_item_map)
             print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}.'.format(
                 epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
-            trainloader = get_trainloader(origin_train_data)
-
 else:
 
     # trainloader = get_trainloaderPair(origin_train_data)
@@ -81,7 +78,7 @@ else:
         # 在训练集上训练
         losses = []
 
-        trainloader = get_trainloaderPair(origin_train_data)
+        trainloader = get_trainloaderPair(origin_train_data, config.seed+epoch)
         for data in trainloader:
             user, item, neg = data
             loss = model.bpr_loss(

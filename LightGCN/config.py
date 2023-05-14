@@ -6,26 +6,27 @@ class config:
     data_path = "./data/{}/".format(dataSetName)
 
     # 取样
-    useBCELoss = False
+    useBCELoss = True
     fake_num = 6  # BCELoss使用
     batch_size = 8192
 
     # 模型
     hidden_dim = 64
-    n_layers = 1
-    alpha_k = [1/(layer+1) for layer in range(n_layers+1)]
-
-    load_weight = False
-    load_epoch = 0
-    load_path = data_path+f"./model/{load_epoch}_64_3_0.001_0.0001.pth"
+    n_layers = 3
+    alpha_k = [1 for layer in range(n_layers+1)]
 
     # 训练
     epochs = 1000
     lr = 1e-3
-    decay = 0
+    decay = 1e-6
 
     # 测试
     topk = 20
+
+    # 是否使用预训练好的模型
+    load_weight = False
+    load_epoch = 0
+    load_path = data_path+f"./model/{load_epoch}_64_1_0.0001_1e-07.pth"
 
     @classmethod
     def display(cls):
