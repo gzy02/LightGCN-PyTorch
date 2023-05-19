@@ -207,34 +207,35 @@ int main()
     // 对每个用户看过的item, 找到最相似的n个item, 最终推荐topk个给用户
     const int topk = 10;
     const unordered_map<string, SimilarityFuncPtr> sim_map{{"E_dis", similarE_dis}, {"J_sim", similarJ_sim}, {"COS", similarCOS}, {"P_cov", similarP_cov}};
-    const vector<string> data_list{"gowalla", "yelp2018"};
+    const vector<string> data_list{"gowalla", "yelp2018", "book", "amazon-book"};
 
     string data_dir = "./";
-    int N = 10;
-    while (N)
+    for (const string &data_name : data_list)
     {
-        cout << "N = " << N << endl;
-        for (const string &data_name : data_list)
+        cout << data_name << ": " << endl;
+        string data_path = data_dir + data_name + "/";
+        string train_data_path = data_path + "train.txt";
+        string test_data_path = data_path + "test.txt";
+        vector<std::unordered_set<int>> train_data_map = generate_user_item_map(train_data_path);
+        vector<std::unordered_set<int>> test_data_map = generate_user_item_map(test_data_path);
+        int user_num = train_data_map.size();
+        cout << "user_num: " << user_num << endl;
+        int item_num = get_item_num(train_data_map);
+        cout << "item_num: " << item_num << endl;
+        auto sim_matrix_count = generate_sim_matrix_count(train_data_map, item_num);
+        auto item_degree = get_item_degree(train_data_map, item_num);
+        int max_user_degree = get_max_user_degree(train_data_map);
+        cout << "max_user_degree: " << max_user_degree << endl;
+        for (const auto &[sim_para, func] : sim_map)
         {
-            cout << data_name << ": " << endl;
-            string data_path = data_dir + data_name + "/";
-            string train_data_path = data_path + "train.txt";
-            string test_data_path = data_path + "test.txt";
-            vector<std::unordered_set<int>> train_data_map = generate_user_item_map(train_data_path);
-            vector<std::unordered_set<int>> test_data_map = generate_user_item_map(test_data_path);
-            int user_num = train_data_map.size();
-            cout << "user_num: " << user_num << endl;
-            int item_num = get_item_num(train_data_map);
-            cout << "item_num: " << item_num << endl;
-            auto sim_matrix_count = generate_sim_matrix_count(train_data_map, item_num);
-            auto item_degree = get_item_degree(train_data_map, item_num);
-            int max_user_degree = get_max_user_degree(train_data_map);
-            cout << "max_user_degree: " << max_user_degree << endl;
-            for (const auto &[sim_para, func] : sim_map)
+            cout << sim_para << endl;
+            auto sim_matrix = generate_sim_matrix(sim_matrix_count, item_degree, train_data_map, item_num, func);
+            int N = 5;
+            while (N)
             {
-                cout << sim_para << endl;
-                auto topkSimMatrix = getTopkSimMatrix(generate_sim_matrix(sim_matrix_count, item_degree, train_data_map, item_num, func), N);
-
+                cout << "N = " << N << endl;
+                auto topkSimMatrix = getTopkSimMatrix(sim_matrix, N);
+                --N;
                 float precision = 0, recall = 0, nDCG = 0, HR = 0;
 
                 for (int user_id = 0; user_id < user_num; ++user_id)
