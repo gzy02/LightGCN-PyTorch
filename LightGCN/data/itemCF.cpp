@@ -110,7 +110,7 @@ inline float similarCOS(int count, int popular_A, int popular_B, int)
 inline float similarP_cov(int count, int popular_A, int popular_B, int length)
 {
     return (length * count - popular_A * popular_B) /
-           sqrt(popular_A * popular_B * (length - popular_A) * (length - popular_B));
+           sqrt((long)popular_A * popular_B * (length - popular_A) * (length - popular_B));
 }
 
 using SimilarityFuncPtr = float (*)(int, int, int, int);
@@ -205,87 +205,88 @@ unordered_set<int> set_intersection(const unordered_set<int> &s1, const unordere
 int main()
 {
     // 对每个用户看过的item, 找到最相似的n个item, 最终推荐topk个给用户
-    const int N = 5;
     const int topk = 10;
     const unordered_map<string, SimilarityFuncPtr> sim_map{{"E_dis", similarE_dis}, {"J_sim", similarJ_sim}, {"COS", similarCOS}, {"P_cov", similarP_cov}};
     const vector<string> data_list{"gowalla", "yelp2018"};
 
     string data_dir = "./";
-    for (const string &data_name : data_list)
+    int N = 10;
+    while (N)
     {
-        cout << data_name << ": " << endl;
-        string data_path = data_dir + data_name + "/";
-        string train_data_path = data_path + "train.txt";
-        string test_data_path = data_path + "test.txt";
-        vector<std::unordered_set<int>> train_data_map = generate_user_item_map(train_data_path);
-        vector<std::unordered_set<int>> test_data_map = generate_user_item_map(test_data_path);
-        int user_num = train_data_map.size();
-        cout << "user_num: " << user_num << endl;
-        int item_num = get_item_num(train_data_map);
-        cout << "item_num: " << item_num << endl;
-        auto sim_matrix_count = generate_sim_matrix_count(train_data_map, item_num);
-        auto item_degree = get_item_degree(train_data_map, item_num);
-        int max_user_degree = get_max_user_degree(train_data_map);
-        cout << "max_user_degree: " << max_user_degree << endl;
-        for (const auto &[sim_para, func] : sim_map)
+        cout << "N = " << N << endl;
+        for (const string &data_name : data_list)
         {
-            cout << sim_para << endl;
-            auto topkSimMatrix = getTopkSimMatrix(generate_sim_matrix(sim_matrix_count, item_degree, train_data_map, item_num, func), N + max_user_degree);
-
-            float precision = 0, recall = 0, nDCG = 0, HR = 0;
-
-            for (int user_id = 0; user_id < user_num; ++user_id)
+            cout << data_name << ": " << endl;
+            string data_path = data_dir + data_name + "/";
+            string train_data_path = data_path + "train.txt";
+            string test_data_path = data_path + "test.txt";
+            vector<std::unordered_set<int>> train_data_map = generate_user_item_map(train_data_path);
+            vector<std::unordered_set<int>> test_data_map = generate_user_item_map(test_data_path);
+            int user_num = train_data_map.size();
+            cout << "user_num: " << user_num << endl;
+            int item_num = get_item_num(train_data_map);
+            cout << "item_num: " << item_num << endl;
+            auto sim_matrix_count = generate_sim_matrix_count(train_data_map, item_num);
+            auto item_degree = get_item_degree(train_data_map, item_num);
+            int max_user_degree = get_max_user_degree(train_data_map);
+            cout << "max_user_degree: " << max_user_degree << endl;
+            for (const auto &[sim_para, func] : sim_map)
             {
-                unordered_map<int, float> rec_items;
-                const unordered_set<int> &target_items = test_data_map[user_id], &interact_items = train_data_map[user_id];
-                for (int item_id : interact_items)
+                cout << sim_para << endl;
+                auto topkSimMatrix = getTopkSimMatrix(generate_sim_matrix(sim_matrix_count, item_degree, train_data_map, item_num, func), N);
+
+                float precision = 0, recall = 0, nDCG = 0, HR = 0;
+
+                for (int user_id = 0; user_id < user_num; ++user_id)
                 {
-                    int need = N;
-                    for (const auto &[sim_item_id, sim_value] : topkSimMatrix[item_id])
+                    unordered_map<int, float> rec_items;
+                    const unordered_set<int> &target_items = test_data_map[user_id], &interact_items = train_data_map[user_id];
+                    for (int item_id : interact_items)
                     {
-                        if (interact_items.find(sim_item_id) == interact_items.cend())
+                        for (const auto &[sim_item_id, sim_value] : topkSimMatrix[item_id])
                         {
-                            rec_items[sim_item_id] += sim_value;
-                            if (--need == 0)
-                                break;
+                            if (interact_items.find(sim_item_id) == interact_items.cend())
+                            {
+                                rec_items[sim_item_id] += sim_value;
+                            }
                         }
                     }
-                }
-                vector<int> rec_list = getTopkByValue(rec_items, topk); // 得到待推荐item列表
-                unordered_set<int> rec_set(rec_list.begin(), rec_list.end());
-                unordered_set<int> intersect = set_intersection(rec_set, target_items);
-                if (intersect.size() == 0)
-                    continue;
+                    vector<int> rec_list = getTopkByValue(rec_items, topk); // 得到待推荐item列表
+                    unordered_set<int> rec_set(rec_list.begin(), rec_list.end());
+                    unordered_set<int> intersect = set_intersection(rec_set, target_items);
+                    if (intersect.size() == 0)
+                        continue;
 
-                HR += 1;
-                precision += (float)intersect.size() / topk;
-                recall += (float)intersect.size() / target_items.size();
+                    HR += 1;
+                    precision += (float)intersect.size() / topk;
+                    recall += (float)intersect.size() / target_items.size();
 
-                float DCG = 0, IDCG = 0;
-                // 交互了：rel_i = 1 否则：rel_i = 0
-                for (int i = 0; i < (int)rec_list.size(); ++i)
-                {
-                    if (target_items.find(rec_list[i]) != target_items.end())
-                        DCG += 1 / log2(i + 2);
-                }
+                    float DCG = 0, IDCG = 0;
+                    // 交互了：rel_i = 1 否则：rel_i = 0
+                    for (int i = 0; i < (int)rec_list.size(); ++i)
+                    {
+                        if (target_items.find(rec_list[i]) != target_items.end())
+                            DCG += 1 / log2(i + 2);
+                    }
 
-                // 推荐系统返回的最好结果：实际喜欢数和topk的最小值
-                for (int i = 0; i < min(topk, (int)target_items.size()); ++i)
-                {
-                    IDCG += 1 / log2(i + 2);
+                    // 推荐系统返回的最好结果：实际喜欢数和topk的最小值
+                    for (int i = 0; i < min(topk, (int)target_items.size()); ++i)
+                    {
+                        IDCG += 1 / log2(i + 2);
+                    }
+                    nDCG += DCG / IDCG;
                 }
-                nDCG += DCG / IDCG;
+                precision /= user_num;
+                recall /= user_num;
+                nDCG /= user_num;
+                HR /= user_num;
+                float F1 = 2 * precision * recall / (precision + recall);
+                cout << "Precision@" << topk << ": " << precision << endl;
+                cout << "recall@" << topk << ": " << recall << endl;
+                cout << "nDCG@" << topk << ": " << nDCG << endl;
+                cout << "F1@" << topk << ": " << F1 << endl;
+                cout << "HR@" << topk << ": " << HR << endl;
             }
-            precision /= user_num;
-            recall /= user_num;
-            nDCG /= user_num;
-            HR /= user_num;
-            float F1 = 2 * precision * recall / (precision + recall);
-            cout << "Precision@" << topk << ": " << precision << endl;
-            cout << "recall@" << topk << ": " << recall << endl;
-            cout << "nDCG@" << topk << ": " << nDCG << endl;
-            cout << "F1@" << topk << ": " << F1 << endl;
-            cout << "HR@" << topk << ": " << HR << endl;
         }
     }
 
