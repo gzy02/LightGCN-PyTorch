@@ -7,12 +7,12 @@ class config:
 
     # 取样
     useBCELoss = True
-    fake_num = 6  # BCELoss使用
-    batch_size = 1024*16
+    fake_num = 3  # BCELoss使用
+    batch_size = 1024*8
 
     # 模型
     hidden_dim = 64
-    n_layers = 2
+    n_layers = 3
     alpha_k = [1/(layer+1) for layer in range(n_layers+1)]
 
     # 训练

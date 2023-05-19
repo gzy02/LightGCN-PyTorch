@@ -4,7 +4,81 @@ import copy
 from typing import Dict, Set, List
 from DataSet import DataSet
 
+class LR_LightGCN(nn.Module):
+    def __init__(self, origin_data: DataSet, hidden_dim: int, n_layers: int, alpha_k:List, load_weight:bool):
+        super().__init__()
+        # 邻接表
+        self.user_item_map = origin_data.user_item_map
+        # 邻接矩阵
+        self.graph = origin_data.norm_adj_matrix
+        # 超参数
+        self.hidden_dim = hidden_dim
+        self.user_num = origin_data.user_num
+        self.item_num = origin_data.item_num
+        self.n_layers = n_layers+1
+        self.alpha_k=alpha_k
+        # 模型参数
+        self.user_embedding = nn.Embedding(self.user_num, hidden_dim)
+        self.item_embedding = nn.Embedding(self.item_num, hidden_dim)
+        
+        if load_weight==False:
+            # nn.init.normal_(self.user_embedding.weight, std=0.1)
+            # nn.init.normal_(self.item_embedding.weight, std=0.1)
+            # print('use NORMAL distribution initilizer')
 
+            nn.init.xavier_uniform_(self.user_embedding.weight, gain=1)
+            nn.init.xavier_uniform_(self.item_embedding.weight, gain=1)
+            print('use xavier initilizer')
+
+    def LightGCNConvolute(self):
+        new_embedding = torch.cat([self.user_embedding.weight, self.item_embedding.weight])
+        all_embedding = [new_embedding]
+        for layer in range(1,self.n_layers):
+            next_embedding=torch.sparse.mm(self.graph,new_embedding)
+            all_embedding.append(next_embedding)
+            new_embedding=next_embedding
+        return all_embedding
+
+    def forward(self, user, item):
+        self.train()
+        all_embedding = self.LightGCNConvolute()
+        loss=torch.zeros(user.shape,device=self.graph.device)
+        for layer in range(self.n_layers):
+            all_user_embedding,all_item_embedding=torch.split(all_embedding[layer], [self.user_num, self.item_num])
+            user_embedding, item_embedding = all_user_embedding[user], all_item_embedding[item]
+            inner_pro = torch.mul(user_embedding, item_embedding)
+            gamma = torch.sum(inner_pro, dim=1)*self.alpha_k[layer]
+            loss += gamma
+        return torch.sigmoid(loss)
+
+    def bpr_loss(self, users, pos, neg):
+        self.train()
+        all_embedding = self.LightGCNConvolute()
+        loss=torch.zeros(1,device=self.graph.device)
+        for layer in range(self.n_layers):
+            all_user_embedding,all_item_embedding=torch.split(all_embedding[layer], [self.user_num, self.item_num])
+            users_emb, pos_emb, neg_emb = all_user_embedding[users], all_item_embedding[pos], all_item_embedding[neg]
+            pos_scores = torch.mul(users_emb, pos_emb)
+            pos_scores = torch.sum(pos_scores, dim=1)
+            neg_scores = torch.mul(users_emb, neg_emb)
+            neg_scores = torch.sum(neg_scores, dim=1)
+            
+            loss += torch.mean(torch.nn.functional.softplus(neg_scores - pos_scores))*self.alpha_k[layer]
+        return loss
+    
+    def getUsersRating(self, users):
+        self.eval()
+        with torch.no_grad():  # 不求导
+            all_embedding = self.LightGCNConvolute()
+            rating=torch.zeros([self.user_num,self.item_num],device=self.graph.device)
+            for layer in range(self.n_layers):
+                all_user_embedding,all_item_embedding=torch.split(all_embedding[layer], [self.user_num, self.item_num])
+                user_embedding, item_embedding = all_user_embedding[users], all_item_embedding
+                inner_pro = torch.matmul(user_embedding, item_embedding.t())
+                rating+=inner_pro*self.alpha_k[layer]
+
+            return torch.sigmoid(rating)
+ 
 class LightGCN(nn.Module):
     def __init__(self, origin_data: DataSet, hidden_dim: int, n_layers: int,alpha_k:List, load_weight:bool):
         super().__init__()
@@ -16,7 +90,7 @@ class LightGCN(nn.Module):
         self.hidden_dim = hidden_dim
         self.user_num = origin_data.user_num
         self.item_num = origin_data.item_num
-        self.n_layers = n_layers
+        self.n_layers = n_layers+1
         self.alpha_k=alpha_k
         # 模型参数
         self.user_embedding = nn.Embedding(self.user_num, hidden_dim)

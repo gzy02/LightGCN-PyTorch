@@ -1,14 +1,15 @@
 # 测试并保存模型
 import math
 from config import config
-from LightGCN import LightGCN
+from LightGCN import LightGCN, LR_LightGCN
 import torch
 from torch import Tensor
 from typing import Dict, Set, Tuple
 from DataSet import DataSet
+from typing import Optional, Union
 
 
-def Test(model: LightGCN, batch_users_gpu: Tensor, origin_train_data: DataSet, test_user_item_map: Dict[int, Set[int]]) -> Tuple[float, float, float, float]:
+def Test(model: Union[LightGCN, LR_LightGCN], batch_users_gpu: Tensor, origin_train_data: DataSet, test_user_item_map: Dict[int, Set[int]]) -> Tuple[float, float, float, float]:
     """测试当前模型"""
     model.eval()
     with torch.no_grad():

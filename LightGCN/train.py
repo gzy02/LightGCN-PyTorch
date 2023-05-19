@@ -2,7 +2,7 @@
 import torch
 
 from config import config
-from LightGCN import LightGCN
+from LightGCN import LightGCN, LR_LightGCN
 from test import Test
 from rand import setup_seed
 from SampleData import get_trainloader, get_trainloaderPair
@@ -37,8 +37,8 @@ batch_users_gpu = torch.arange(
     0, origin_train_data.user_num, dtype=torch.int32).to(device)
 
 # %% 模型与优化器
-model = LightGCN(origin_train_data, config.hidden_dim,
-                 config.n_layers, config.alpha_k, config.load_weight)
+model = LR_LightGCN(origin_train_data, config.hidden_dim,
+                    config.n_layers, config.alpha_k, config.load_weight)
 if config.load_weight:
     model.load_state_dict(torch.load(config.load_path))
     print(f"Load model {config.load_path}")
@@ -68,13 +68,15 @@ if config.useBCELoss:
         print('Epoch {} finished, average loss {}'.format(
             epoch, sum(losses) / len(losses)))
         if epoch % 5 == 0:
-            torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
-                epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
             if config.dataSetName != 'book':
                 precision, recall, nDCG, F1 = Test(
                     model, batch_users_gpu, origin_train_data, test_user_item_map)
                 print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}.'.format(
                     epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
+            else:
+                torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
+                    epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
+
 else:
 
     # trainloader = get_trainloaderPair(origin_train_data)
@@ -96,10 +98,11 @@ else:
             epoch, sum(losses) / len(losses)))
 
         if epoch % 5 == 0:
-            torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
-                epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
             if config.dataSetName != 'book':
                 precision, recall, nDCG, F1 = Test(
                     model, batch_users_gpu, origin_train_data, test_user_item_map)
                 print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}'.format(
                     epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
+            else:
+                torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
+                    epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
