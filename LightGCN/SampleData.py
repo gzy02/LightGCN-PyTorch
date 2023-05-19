@@ -10,8 +10,8 @@ class SampleDataBCE(Dataset):
     def __init__(self, origin_data: DataSet, fake_num: int, seed: int):
         super().__init__()
         my_sample.set_seed(seed)
-        self.Xs: List[Tuple[int, int, int]] = my_sample.sample_weightBCE(
-            origin_data.user_item_map, origin_data.item_degree, fake_num)
+        self.Xs: List[Tuple[int, int, int]] = my_sample.sample_randomBCE(
+            origin_data.user_item_map, origin_data.item_num, fake_num)
 
     def __getitem__(self, index):
         user_id, item_id, label = self.Xs[index]
