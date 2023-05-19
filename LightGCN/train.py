@@ -19,7 +19,10 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("device:", device)
 
 # %% 初始化原始训练数据
-origin_train_data = DataSet(config.data_path + 'train.txt', device)
+if config.dataSetName == 'book':
+    origin_train_data = DataSet(config.data_path + 'full_train.txt', device)
+else:
+    origin_train_data = DataSet(config.data_path + 'train.txt', device)
 print("用户数：", origin_train_data.user_num)
 print("物品数：", origin_train_data.item_num)
 print("用户节点度数最大值：", max(origin_train_data.user_degree))
@@ -67,10 +70,11 @@ if config.useBCELoss:
         if epoch % 5 == 0:
             torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
                 epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
-            precision, recall, nDCG, F1 = Test(
-                model, batch_users_gpu, origin_train_data, test_user_item_map)
-            print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}.'.format(
-                epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
+            if config.dataSetName != 'book':
+                precision, recall, nDCG, F1 = Test(
+                    model, batch_users_gpu, origin_train_data, test_user_item_map)
+                print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}.'.format(
+                    epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
 else:
 
     # trainloader = get_trainloaderPair(origin_train_data)
@@ -94,7 +98,8 @@ else:
         if epoch % 5 == 0:
             torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
                 epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
-            precision, recall, nDCG, F1 = Test(
-                model, batch_users_gpu, origin_train_data, test_user_item_map)
-            print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}'.format(
-                epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
+            if config.dataSetName != 'book':
+                precision, recall, nDCG, F1 = Test(
+                    model, batch_users_gpu, origin_train_data, test_user_item_map)
+                print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}'.format(
+                    epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))

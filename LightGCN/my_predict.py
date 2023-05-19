@@ -4,7 +4,7 @@ from DataSet import DataSet
 from test import Test
 from LightGCN import LightGCN
 import pandas as pd
-epoch = 55
+epoch = 45
 hidden_dim = 64
 n_layers = 3
 topk = 10

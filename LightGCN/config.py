@@ -6,14 +6,14 @@ class config:
     data_path = "./data/{}/".format(dataSetName)
 
     # 取样
-    useBCELoss = True
-    fake_num = 6  # BCELoss使用
-    batch_size = 8192
+    useBCELoss = False
+    fake_num = 4  # BCELoss使用
+    batch_size =8192
 
     # 模型
     hidden_dim = 64
-    n_layers = 3
-    alpha_k = [1 for layer in range(n_layers+1)]
+    n_layers = 4
+    alpha_k = [1/(layer+1) for layer in range(n_layers+1)]
 
     # 训练
     epochs = 1000

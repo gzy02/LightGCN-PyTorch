@@ -36,8 +36,10 @@ class SampleDataPair(Dataset):
     def __init__(self, origin_data: DataSet, seed: int):
         super().__init__()
         my_sample.set_seed(seed)
-        self.Xs: List[Tuple[int, int, int]] = my_sample.sample_weightBPR(
-            origin_data.user_item_map, origin_data.item_degree)
+        # self.Xs: List[Tuple[int, int, int]] = my_sample.sample_weightBPR(
+        #    origin_data.user_item_map, origin_data.item_degree)
+        self.Xs: List[Tuple[int, int, int]] = my_sample.sample_randomBPR(
+            origin_data.user_item_map, origin_data.item_num)
 
     def __getitem__(self, index):
         user_id, pos, neg = self.Xs[index]
