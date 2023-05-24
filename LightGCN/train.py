@@ -38,7 +38,7 @@ batch_users_gpu = torch.arange(
 
 # %% 模型与优化器
 model = LR_LightGCN(origin_train_data, config.hidden_dim,
-                    config.n_layers, config.alpha_k, config.load_weight)
+                    config.n_layers, config.alpha_k, config.load_weight, config.thre)
 if config.load_weight:
     model.load_state_dict(torch.load(config.load_path))
     print(f"Load model {config.load_path}")

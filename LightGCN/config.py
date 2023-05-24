@@ -1,24 +1,25 @@
 # 定义超参
 class config:
     seed = 2023
-    dataSetName = 'gowalla'
+    dataSetName = 'yelp2018'
     # 可选列表: ['book','amazon-book','gowalla','yelp2018']
     data_path = "./data/{}/".format(dataSetName)
 
     # 取样
-    useBCELoss = True
-    fake_num = 3  # BCELoss使用
-    batch_size = 1024*8
+    useBCELoss = False
+    fake_num = 4  # BCELoss使用
+    batch_size = 1024
 
     # 模型
     hidden_dim = 64
-    n_layers = 3
-    alpha_k = [1/(layer+1) for layer in range(n_layers+1)]
+    n_layers = 4
+    alpha_k = [1/(layer*layer+1) for layer in range(n_layers+1)]
+    thre = 2
 
     # 训练
-    epochs = 1000
+    epochs = 2000
     lr = 1e-3
-    decay = 1e-6
+    decay = 1e-7
 
     # 测试
     topk = 20
