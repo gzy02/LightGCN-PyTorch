@@ -11,10 +11,9 @@ class config:
     batch_size = 1024
 
     # 模型
-    hidden_dim = 64
+    hidden_dim = 128
     n_layers = 4
-    alpha_k = [1/(layer*layer+1) for layer in range(n_layers+1)]
-    thre = 2
+    alpha_k = [1/(layer+1) for layer in range(n_layers+1)]
 
     # 训练
     epochs = 2000

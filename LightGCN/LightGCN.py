@@ -76,7 +76,7 @@ class LR_LightGCN(nn.Module):
             return torch.sigmoid(rating)
  
 class LightGCN(nn.Module):
-    def __init__(self, origin_data: DataSet, hidden_dim: int, n_layers: int,alpha_k:List, load_weight:bool,thre:float):
+    def __init__(self, origin_data: DataSet, hidden_dim: int, n_layers: int,alpha_k:List, load_weight:bool):
         super().__init__()
         # 邻接表
         self.user_item_map = origin_data.user_item_map
@@ -88,19 +88,19 @@ class LightGCN(nn.Module):
         self.item_num = origin_data.item_num
         self.n_layers = n_layers+1
         self.alpha_k=alpha_k
-        self.thre=thre
+
         # 模型参数
         self.user_embedding = nn.Embedding(self.user_num, hidden_dim)
         self.item_embedding = nn.Embedding(self.item_num, hidden_dim)
         
         if load_weight==False:
-            # nn.init.normal_(self.user_embedding.weight, std=0.1)
-            # nn.init.normal_(self.item_embedding.weight, std=0.1)
-            # print('use NORMAL distribution initilizer')
+            nn.init.normal_(self.user_embedding.weight, std=0.1)
+            nn.init.normal_(self.item_embedding.weight, std=0.1)
+            print('use NORMAL distribution initilizer')
 
-            nn.init.xavier_uniform_(self.user_embedding.weight, gain=1)
-            nn.init.xavier_uniform_(self.item_embedding.weight, gain=1)
-            print('use xavier initilizer')
+            #nn.init.xavier_uniform_(self.user_embedding.weight, gain=1)
+            #nn.init.xavier_uniform_(self.item_embedding.weight, gain=1)
+            #print('use xavier initilizer')
 
     def LightGCNConvolute(self):
         new_embedding = torch.cat([self.user_embedding.weight, self.item_embedding.weight])
@@ -129,7 +129,7 @@ class LightGCN(nn.Module):
         pos_scores = torch.sum(pos_scores, dim=1)
         neg_scores = torch.mul(users_emb, neg_emb)
         neg_scores = torch.sum(neg_scores, dim=1)
-        neg_scores[neg_scores<self.thre]=self.thre
+        
         loss = torch.mean(torch.nn.functional.softplus(neg_scores - pos_scores))
         return loss
     
