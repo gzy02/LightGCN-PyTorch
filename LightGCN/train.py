@@ -70,9 +70,9 @@ if config.useBCELoss:
         print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}'.format(
             epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
 
-        if epoch % 10 == 0:
-            torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
-                epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
+        # if epoch % 10 == 0:
+        #    torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
+        #        epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
 
 else:
 
@@ -98,6 +98,6 @@ else:
         print('Epoch {} : Precision@{} {}, Recall@{} {}, F1@{} {}, nDCG@{} {}'.format(
             epoch, config.topk, precision, config.topk, recall, config.topk, F1, config.topk, nDCG))
 
-        if epoch % 10 == 0:
-            torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
-                epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
+        # if epoch % 10 == 0:
+        #    torch.save(model.state_dict(), config.data_path+'model/{}_{}_{}_{}_{}.pth'.format(
+        #        epoch, config.hidden_dim, config.n_layers, config.lr, config.decay))
