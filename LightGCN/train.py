@@ -1,4 +1,5 @@
 # %% import
+import os
 import torch
 
 from config import config
@@ -9,6 +10,8 @@ from SampleData import get_trainloader, get_trainloaderPair
 from DataSet import DataSet, get_user_item_map
 
 # %% 打印全局超参数
+pid = os.getpid()
+print("pid =", pid)
 config.display()
 
 # %% 设置随机数种子

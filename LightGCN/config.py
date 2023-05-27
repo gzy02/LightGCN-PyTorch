@@ -1,7 +1,7 @@
 # 定义超参
 class config:
     seed = 2023
-    dataSetName = 'gowalla'
+    dataSetName = 'amazon-book'
     # 可选列表: ['book','amazon-book','gowalla','yelp2018']
     data_path = "./data/{}/".format(dataSetName)
 
@@ -9,7 +9,7 @@ class config:
     useBCELoss = False
     useWeight = True
     fake_num = 4  # BCELoss使用
-    batch_size = 1024*8
+    batch_size = 1024
 
     # 模型
     hidden_dim = 128
