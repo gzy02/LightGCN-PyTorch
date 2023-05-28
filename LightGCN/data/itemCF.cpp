@@ -83,14 +83,24 @@ vector<vector<int>> generate_sim_matrix_count(const vector<unordered_set<int>> &
     vector<vector<int>> ans(item_num, vector<int>(item_num));
     for (const auto &items : user_item_map)
     {
-        for (int item_id1 : items)
+        vector<int> tep_items(items.begin(), items.end());
+        int n = tep_items.size();
+        for (int i = 0; i < n; ++i)
         {
-            for (int item_id2 : items)
+            for (int j = i + 1; j < n; ++j)
             {
-                ++ans[item_id1][item_id2];
+                ++ans[tep_items[i]][tep_items[j]];
+                ++ans[tep_items[j]][tep_items[i]];
             }
-            ans[item_id1][item_id1] = 0;
         }
+        // for (int item_id1 : items)
+        //{
+        //     for (int item_id2 : items)
+        //     {
+        //         ++ans[item_id1][item_id2];
+        //     }
+        //     ans[item_id1][item_id1] = 0;
+        // }
     }
     return ans;
 }
@@ -152,13 +162,13 @@ vector<pair<int, float>> getTopk(const vector<float> &sim_matrix, int k)
     return top_k;
 }
 
-vector<vector<pair<int, float>>> getTopkSimMatrix(const vector<vector<float>> &sim_matrix, int k)
+vector<vector<pair<int, float>>> getTopkSimMatrix(const vector<vector<float>> &sim_matrix, const int k, const vector<int> &item_degree)
 {
     int item_num = sim_matrix.size();
     vector<vector<pair<int, float>>> ans(item_num);
     for (int i = 0; i < item_num; ++i)
     {
-        ans[i] = getTopk(sim_matrix[i], k);
+        ans[i] = getTopk(sim_matrix[i], k + item_degree[i]);
     }
     return ans;
 }
@@ -205,9 +215,9 @@ unordered_set<int> set_intersection(const unordered_set<int> &s1, const unordere
 int main()
 {
     // 对每个用户看过的item, 找到最相似的n个item, 最终推荐topk个给用户
-    const int topk = 10;
+    const int topk = 20;
     const unordered_map<string, SimilarityFuncPtr> sim_map{{"E_dis", similarE_dis}, {"J_sim", similarJ_sim}, {"COS", similarCOS}, {"P_cov", similarP_cov}};
-    const vector<string> data_list{"gowalla", "yelp2018", "book", "amazon-book"};
+    const vector<string> data_list{"gowalla", "yelp2018"};
 
     string data_dir = "./";
     for (const string &data_name : data_list)
@@ -224,31 +234,32 @@ int main()
         cout << "item_num: " << item_num << endl;
         auto sim_matrix_count = generate_sim_matrix_count(train_data_map, item_num);
         auto item_degree = get_item_degree(train_data_map, item_num);
-        int max_user_degree = get_max_user_degree(train_data_map);
-        cout << "max_user_degree: " << max_user_degree << endl;
+        // int max_user_degree = get_max_user_degree(train_data_map);
+        // cout << "max_user_degree: " << max_user_degree << endl;
         for (const auto &[sim_para, func] : sim_map)
         {
             cout << sim_para << endl;
             auto sim_matrix = generate_sim_matrix(sim_matrix_count, item_degree, train_data_map, item_num, func);
-            int N = 5;
-            while (N)
+            int N = 150;
+            auto topkSimMatrix = getTopkSimMatrix(sim_matrix, N, item_degree);
+            while (N > 50)
             {
-                cout << "N = " << N << endl;
-                auto topkSimMatrix = getTopkSimMatrix(sim_matrix, N);
-                --N;
+                cout << "K = " << N << endl;
                 float precision = 0, recall = 0, nDCG = 0, HR = 0;
-
                 for (int user_id = 0; user_id < user_num; ++user_id)
                 {
                     unordered_map<int, float> rec_items;
                     const unordered_set<int> &target_items = test_data_map[user_id], &interact_items = train_data_map[user_id];
                     for (int item_id : interact_items)
                     {
+                        int need = N;
                         for (const auto &[sim_item_id, sim_value] : topkSimMatrix[item_id])
                         {
                             if (interact_items.find(sim_item_id) == interact_items.cend())
                             {
                                 rec_items[sim_item_id] += sim_value;
+                                if (--need == 0)
+                                    break;
                             }
                         }
                     }
@@ -277,6 +288,7 @@ int main()
                     }
                     nDCG += DCG / IDCG;
                 }
+                --N;
                 precision /= user_num;
                 recall /= user_num;
                 nDCG /= user_num;
