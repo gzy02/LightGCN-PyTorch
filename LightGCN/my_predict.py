@@ -4,20 +4,20 @@ from DataSet import DataSet
 from test import Test
 from LightGCN import LightGCN
 import pandas as pd
-epoch = 45
-hidden_dim = 64
-n_layers = 3
+epoch = 970
+hidden_dim = 128
+n_layers = 0
 topk = 10
 alpha_k = [1/(layer+1) for layer in range(1+n_layers)]
 lr = 0.001
-decay = 1e-06
+decay = 1e-07
 
 data_path = "./data/book/"
 test_user_data_path = data_path+'test_dataset.csv'
 load_path = data_path + \
     f"model/{epoch}_{hidden_dim}_{n_layers}_{lr}_{decay}.pth"
 submission_path = data_path + \
-    f'bce_{epoch}_{hidden_dim}_{n_layers}_{lr}_{decay}.csv'
+    f'bpr_{epoch}_{hidden_dim}_{n_layers}_{lr}_{decay}.csv'
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("device:", device)
