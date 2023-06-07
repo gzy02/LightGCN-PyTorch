@@ -1,15 +1,15 @@
 # 定义超参
 class config:
     seed = 2023
-    dataSetName = 'amazon-book'
+    dataSetName = 'gowalla'
     # 可选列表: ['book','amazon-book','gowalla','yelp2018']
     data_path = "./data/{}/".format(dataSetName)
 
     # 取样
-    useBCELoss = False
-    useWeight = True
+    useBCELoss = True
+    useWeight = False
     fake_num = 4  # BCELoss使用
-    batch_size = 1024
+    batch_size = 1024*8
 
     # 模型
     hidden_dim = 128
@@ -27,7 +27,7 @@ class config:
     # 是否使用预训练好的模型
     load_weight = False
     load_epoch = 0
-    load_path = data_path+f"./model/{load_epoch}_64_1_0.0001_1e-07.pth"
+    load_path = data_path+f"model/{load_epoch}_128_0_0.001_1e-07.pth"
 
     @classmethod
     def display(cls):

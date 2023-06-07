@@ -22,10 +22,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("device:", device)
 
 # %% 初始化原始训练数据
-if config.dataSetName == 'book':
-    origin_train_data = DataSet(config.data_path + 'full_train.txt', device)
-else:
-    origin_train_data = DataSet(config.data_path + 'train.txt', device)
+origin_train_data = DataSet(config.data_path + 'train.txt', device)
 print("用户数：", origin_train_data.user_num)
 print("物品数：", origin_train_data.item_num)
 print("用户节点度数最大值：", max(origin_train_data.user_degree))
